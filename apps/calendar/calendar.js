@@ -1,6 +1,7 @@
 const maxX = g.getWidth();
 const maxY = g.getHeight();
-const fontSize = g.getWidth()>200?2:1;
+// const fontSize = g.getWidth()>200?2:1;
+const fontSize = 16;
 const rowN = 7;
 const colN = 7;
 const headerH = maxY / 7;
@@ -11,21 +12,52 @@ const color2 = "#4192D9";
 const color3 = "#026873";
 const color4 = "#038C8C";
 const color5 = "#03A696";
-const black = "#000000";
-const white = "#ffffff";
+
 const gray1 = "#444444";
 const gray2 = "#888888";
 const gray3 = "#bbbbbb";
-const red = "#d41706";
+
+const black = "#000000";
+const white = "#ffffff";
+
+const red = "#FF0000";
+const green = "#00FF00";
+const blue = "#0000FF";
+
+const purple = "#c3ff00"
+
+const monthMap = {
+  0: "January",
+  1: "February",
+  2: "March",
+  3: "April",
+  4: "May",
+  5: "June",
+  6: "July",
+  7: "August",
+  8: "September",
+  9: "October",
+  10: "November",
+  11: "December"
+};
+
+const dowLbls = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+
+const week_bg = black;
+const month_bg = black;
+const month_col = white;
+const day_lbl_bg = gray3;
+const day_lbl_col = black;
+const wkend_bg = red;
 
 function drawCalendar(date) {
-  g.setBgColor(color4);
+  g.setBgColor(week_bg);
   g.clearRect(0, 0, maxX, maxY);
-  g.setBgColor(color1);
+  g.setBgColor(month_bg);
   g.clearRect(0, 0, maxX, headerH);
-  g.setBgColor(color2);
+  g.setBgColor(day_lbl_bg);
   g.clearRect(0, headerH, maxX, headerH + rowH);
-  g.setBgColor(color3);
+  g.setBgColor(purple);
   g.clearRect(colW * 5, headerH + rowH, maxX, maxY);
   for (let y = headerH; y < maxY; y += rowH) {
     g.drawLine(0, y, maxX, y);
@@ -36,23 +68,9 @@ function drawCalendar(date) {
 
   const month = date.getMonth();
   const year = date.getFullYear();
-  const monthMap = {
-    0: "January",
-    1: "February",
-    2: "March",
-    3: "April",
-    4: "May",
-    5: "June",
-    6: "July",
-    7: "August",
-    8: "September",
-    9: "October",
-    10: "November",
-    11: "December"
-  };
   g.setFontAlign(0, 0);
-  g.setFont("6x8", fontSize);
-  g.setColor(white);
+  g.setFont("Vector", fontSize);
+  g.setColor(month_col);
   g.drawString(`${monthMap[month]} ${year}`, maxX / 2, headerH / 2);
   g.drawPoly([10, headerH / 2, 20, 10, 20, headerH - 10], true);
   g.drawPoly(
@@ -60,8 +78,8 @@ function drawCalendar(date) {
     true
   );
 
-  g.setFont("6x8", fontSize);
-  const dowLbls = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+  g.setColor(day_lbl_col);
+  g.setFont("Vector", fontSize);
   dowLbls.forEach((lbl, i) => {
     g.drawString(lbl, i * colW + colW / 2, headerH + rowH / 2);
   });
