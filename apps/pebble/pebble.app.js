@@ -1,10 +1,13 @@
 const purple = "#ff00cc";
 const acid = "#00ff00";
+const black = "#000000";
+// const red = black;
+const red = "#FF0000";
 
-function contrastingColor(color)
+function getContrastingColor(color)
 {
     // deal with black case(0)
-    let color = (color === 0) ? '#000000' : color;
+    // let color = (color === 0) ? '#000000' : color;
 
     console.log(`Color IN: ${color}`);
     let in_col = color.slice(1);
@@ -12,8 +15,8 @@ function contrastingColor(color)
     // console.log(`in_col: ${in_col}`);
     let color_rgb = (luma(in_col) >= 165) ? '#000' : '#fff';
     // console.log(`color_rgb: ${color_rgb}`);
-    console.log(`Color OUT: ${g.toColor(color_rgb)}`);
-    return g.toColor(color_rgb);
+    // console.log(`Color OUT: ${g.toColor(color_rgb)}`);
+    return color_rgb;
 }
 function luma(color) // color can be a hx string or an array of RGB values 0-255
 {
@@ -34,16 +37,21 @@ function hexToRGBArray(color)
     return rc;
 }
 
-const col_top_bg = acid;
-const col_btm_bg = acid;
+const _bg = acid;
+const _time
+const col_top_bg = _bg;
+const col_btm_bg = _bg;
+const col_time_bg = red;
 
-const col_top_bar = contrastingColor(acid);
-// const col_top_bar = purple;
-const col_day = acid;
-const col_steps = contrastingColor(col_top_bg);
-const col_time = acid;
-const col_btm_bar = acid;
-const col_calendar = acid;
+const col_top_bar = getContrastingColor(col_btm_bg);
+
+const col_day = getContrastingColor(col_top_bg);
+const col_steps = getContrastingColor(col_top_bg);
+// const col_steps = purple;
+const col_time = getContrastingColor(col_time_bg);
+const col_btm_bar = getContrastingColor(col_btm_bg);
+
+const col_calendar = getContrastingColor(col_top_bg);
 
 const SETTINGS_FILE = "pebble.json";
 let settings;
@@ -57,7 +65,7 @@ const ha = 2*h/5 - 4;
 const h2 = 3*h/5 - 10;
 const h3 = 7*h/8;
 
-let batteryWarning = false;
+let batteryWarning = true;
 
 var img = require("heatshrink").decompress(atob("oFAwkEogA/AH4A/AH4A/AH4A/AE8AAAoeXoAfeDQUBmcyD7A+Dh///8QD649CiAfaHwUvD4sEHy0DDYIfEICg+Cn4fHICY+DD4nxcgojOHwgfEIAYfRCIQaDD4ZAFD5r7DH4//kAfRCIZ/GAAnwD5p9DX44fTHgYSBf4ofVDAQEBl4fFUAgfOXoQzBgIfFBAIfPP4RAEAoYAB+cRiK/SG4h/WIBAfXIA7CBAAswD55AHn6fUIBMCD65AHl4gCmcziAfQQJqfQQJpiDgk0IDXxQLRAEECaBM+QgRYRYgUIA0CD4ggSQJiDCiAKBICszAAswD55AHABKBVD7BAFABIqBD5pAFABPxD55AOD6BADiIAJQAyxLABwf/gaAPAH4A/AH4ARA=="));
 
@@ -98,14 +106,6 @@ function draw() {
   // g.setColor(g.theme.fg);
   g.setColor(col_top_bar);
   g.fillRect(0, h2 - t, w, h2);
-
-  // calculated at runtime
-  // day and steps
-  // if (settings.color == 'Blue' || settings.color == 'Red')
-  //   g.setColor('#fff'); // white on blue or red best contrast
-  // else
-  //   g.setColor('#000'); // otherwise black regardless of theme
-
   
   g.setColor(col_day)
   g.setFontLECO1976Regular22();
@@ -115,17 +115,18 @@ function draw() {
   g.drawString(getSteps(), 3*w/4, ha);
   
   // time
-  g.setColor(col_time);
+  g.setColor(col_time_bg);
   g.fillRect(0, h2, w, h3);
-
+  
   g.setFontLECO1976Regular42();
   g.setFontAlign(0, -1);
-  g.setColor(!batteryWarning ? g.theme.fg : '#fff');
+  // g.setColor(!batteryWarning ? col_time : '#fff');
+  g.setColor(col_time);
   g.drawString(timeStr, w/2, h2 + 8);
 
   // contrast bar
   g.setColor(col_btm_bar);
-  // g.fillRect(0, h3, w, h3 + t);
+  g.fillRect(0, h3, w, h3 + t);
   
   // the bottom
   // g.setColor(settings.bg);
@@ -141,9 +142,11 @@ function draw() {
 // at x,y width:wi thicknes:th
 function drawCalendar(x,y,wi,th,str) {
 
-  let outer_calendar = contrastingColor(col_top_bg);
-  let inner_calendar = contrastingColor(outer_calendar);
+  let outer_calendar = getContrastingColor(col_top_bg);
+  let inner_calendar = getContrastingColor(outer_calendar);
+  let col_calendar_text = getContrastingColor(inner_calendar);
   g.setColor(outer_calendar);
+
   g.fillRect(x, y, x + wi, y + wi);
   g.setColor(inner_calendar);
   g.fillRect(x + th, y + th, x + wi - th, y + wi - th);
@@ -154,10 +157,9 @@ function drawCalendar(x,y,wi,th,str) {
   g.fillRect(x + (wi/3) - (th/2), y - hook_t, x + wi/3 + th - (th/2), y + hook_t);
   // second calendar hook, two thirds in
   g.fillRect(x + (2*wi/3) -(th/2), y - hook_t, x + 2*wi/3 + th - (th/2), y + hook_t);
-
+  
   g.setFontLECO1976Regular22();
-  g.setFontAlign(0, 0);
-  g.drawString(str, x + wi/2, y + wi/2 + th);
+  g.setColor(col_calendar_text).setFontAlign(0, 0).drawString(str, x + wi/2, y + wi/2 + th);
 }
 
 function getSteps() {
