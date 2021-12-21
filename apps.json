@@ -4799,6 +4799,31 @@
     "screenshots":[
       { "url":"screenshot.png" }
     ]
+  },
+  {
+    "id": "ptool",
+    "name": "Palette Tool",
+    "shortName": "ptool",
+    "version": "0.01",
+    "description": "A tool to view colors and palettes.",
+    "icon": "app.png",
+    "tags": "",
+    "allow_emulator": true,
+    "supports": [
+      "BANGLEJS2"
+    ],
+    "readme": "README.md",
+    "storage": [
+      {
+        "name": "palette.app.js",
+        "url": "app.js"
+      },
+      {
+        "name": "palette.img",
+        "url": "app-icon.js",
+        "evaluate": true
+      }
+    ]
   }
   
 ]
