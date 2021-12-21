@@ -85,7 +85,7 @@ function drawCalendar(date) {
   });
 
   date.setDate(1);
-  const dow = date.getDay();
+  const dow = date.getDay() + (settings.startOnSun ? 1 : 0);
   const dowNorm = dow === 0 ? 7 : dow;
 
   const monthMaxDayMap = {
@@ -129,14 +129,19 @@ function drawCalendar(date) {
         today.year === year && today.month === month && today.day === day - 50;
       if (isToday) {
         g.setColor(red);
+        let x1 = x * colW;
+        let y1 = y * rowH + headerH + rowH;
+        let x2 = x * colW + colW;
+        let y2 = y * rowH + headerH + rowH + rowH;
+        g.drawRect(x1, y1, x2, y2);
         g.drawRect(
-          x * colW,
-          y * rowH + headerH + rowH,
-          x * colW + colW - 1,
-          y * rowH + headerH + rowH + rowH
+          x1 + 1,
+          y1 + 1,
+          x2 - 1,
+          y2 - 1
         );
       }
-      g.setColor(day < 50 ? gray3 : white);
+      g.setColor(day < 50 ? fgOtherMonth : fgSameMonth);
       g.drawString(
         (day > 50 ? day - 50 : day).toString(),
         x * colW + colW / 2,
@@ -154,10 +159,10 @@ const today = {
 };
 drawCalendar(date);
 clearWatch();
-Bangle.on("touch",area=>{
+Bangle.on("touch", area => {
   const month = date.getMonth();
   let prevMonth;
-  if (area==1) {
+  if (area == 1) {
     let prevMonth = month > 0 ? month - 1 : 11;
     if (prevMonth === 11) date.setFullYear(date.getFullYear() - 1);
     date.setMonth(prevMonth);
