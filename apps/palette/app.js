@@ -13,6 +13,9 @@ const BLUE = "#0000FF";
 
 const PURPLE = "#ff00ff";
 const YELLOW = "#ffff00";
+const transp = -1;
+
+const COLORS = [BLACK, WHITE, GREY_DARK, GREY, GREY_BRIGHT, RED, GREEN, BLUE, PURPLE, YELLOW];
 
 const GFX_ORIGIN = {
   x: g.getWidth() / 2,
@@ -23,7 +26,6 @@ const left = 3;
 const _screen_mid = g.getWidth() / 2;
 const right = 176 - 4;
 
-const spacing = 4;
 const border = 4;
 const top_start = 25;
 
@@ -36,13 +38,13 @@ const pos_y = [
 // list of points to render
 const LAYOUTS = {
   "3x2": [
-    { id: "btn", origin:{x: left, y: pos_y[0]}, size: {w: 80, h: 80}, label:"One" },
-      // { id: "btn", origin:{x: 10, y: 10}, size: {w: 80, h: 40}, label:"Two" },
-      { id: "btn", origin:{x: 100, y: 170}, size: {w: 10, h: 70}, label:"Three" },
-  { id: "btn", origin:{x: left, y: pos_y[2]}, label:"test" },
-  // { id: "btn", origin:{x: _screen_mid + 2, y: pos_y[0]}, label:"test" },
-  // { id: "btn", origin:{x: _screen_mid + 2, y: pos_y[1]}, label:"test" },
-  // { id: "btn", origin:{x: _screen_mid + 2, y: pos_y[2]}, label:"test" },
+    { type: "btn", origin:{x: left, y: pos_y[0]}, size: {w: 80, h: 80}, label:"One" },
+      // { type: "btn", origin:{x: 10, y: 10}, size: {w: 80, h: 40}, label:"Two" },
+      { type: "btn", origin:{x: 100, y: 170}, size: {w: 10, h: 70}, label:"Three" },
+  { type: "btn", origin:{x: left, y: pos_y[2]}, label:"test" },
+  // { type: "btn", origin:{x: _screen_mid + 2, y: pos_y[0]}, label:"test" },
+  // { type: "btn", origin:{x: _screen_mid + 2, y: pos_y[1]}, label:"test" },
+  // { type: "btn", origin:{x: _screen_mid + 2, y: pos_y[2]}, label:"test" },
   ],
   "OK": [
     {x: 50, y: 50, label: "OK"},
@@ -66,6 +68,46 @@ const BTN_CALL_DEF = function () {
 
 }
 
+class Window {
+  constructor(label, bgCol) {
+    this.label = "win_"
+    this.label += (typeof label !== "undefined") ? label : "Unset";
+    // console.log(`Constructing Window ${this.label}, args: ${arguments}`)
+
+    this.bgCol = bgCol;
+    this.layers = [];
+  }
+
+  push(layer) {
+    layer.label=`${this.layers.length}_${layer.label}`;
+    this.layers.push(layer);
+  }
+  pop() {
+    this.layers.pop();
+  }
+
+  top_layer() {
+    return this.layers[this.layers.length - 1];
+  }
+
+  render() {
+
+    if (this.bgCol !== transp) {
+      // console.log(`${this.label}: filling bg in ${this.bgCol}`);
+      g.setColor(this.bgCol);
+      g.fillRect(0, 0, g.getWidth(), g.getHeight());
+    }
+
+
+    let i = 0;
+    this.layers.forEach((lyr) => {
+      // console.log(`Rendering Layer ${i} ${lyr.label}`)
+      i++;
+      lyr.render();
+    });
+  }
+}
+
 class Layer {
 
   constructor(label) {
@@ -85,11 +127,11 @@ class Layer {
     for (let i = 0; i < new_layout.length; i++) {
       
       let feature = new_layout[i];
-      let id = feature.id;
-      // this.id = (typeof id !== "undefined") ? id : "Unset";
-      if (typeof id !== "undefined") {
-        console.log(`Parsing feature: ${JSON.stringify(feature)}`)
-        if (id === "btn") {
+      let type = feature.type;
+      // this.type = (typeof type !== "undefined") ? type : "Unset";
+      if (typeof type !== "undefined") {
+        // console.log(`Parsing feature: ${JSON.stringify(feature)}`)
+        if (type === "btn") {
           let item = new Button();
 
           item.label = (typeof feature.label !== "undefined") ? feature.label : "undef";
@@ -100,11 +142,11 @@ class Layer {
         }
       }
       else {
-        console.log(`Undefined entry: ${id}`);
+        console.log(`Undefined entry: ${type}`);
       }
       
       this.layout.push(item);
-      console.log(`Added new item: ${JSON.stringify(item)}`)
+      // console.log(`Added new item: ${JSON.stringify(item)}`)
 
     }
   }
@@ -149,15 +191,34 @@ class Button {
       }
 
       this.size = BTN_DEFAULT_SIZE;
-  }
+    }
+    
+    was_tapped(xy) {
+      var x = xy.x;
+      var y = xy.y;
+      
+      let x1 = this.origin.x;
+      let y1 = this.origin.y;
+      let x2 = this.origin.x + this.size.h;
+      let y2 = this.origin.y + this.size.w;
 
+    if ((x > x1 && x < x2) && (y > y1 && y < y2)) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
   set_label(label) {
     this.label = label;
     return this; // for chaining
   }
 
   set_style(style) {
-    this.style = style;
+    // keep features if we only pass some colors
+    this.style.col_bg = (is_undefined(style.col_bg)) ? this.style.col_bg : style.col_bg;
+    this.style.col_border = (is_undefined(style.col_border)) ? this.style.col_border : style.col_border;
+    this.style.col_text = (is_undefined(style.col_text)) ? this.style.col_text : style.col_text;
     return this;
   }
 
@@ -170,22 +231,17 @@ class Button {
     this.size = size;
     return this;
   }
-
+  
   render() {
-
+    
     let x1 = this.origin.x;
     let y1 = this.origin.y;
-    let x2 = this.origin.x + this.size.h;
-    let y2 = this.origin.y + this.size.w;
+    let x2 = this.origin.x + this.size.w;
+    let y2 = this.origin.y + this.size.h;
+    let border_thickness = 6;
 
-    console.log(`Rendering Button ${JSON.stringify(this.label)} | og ${JSON.stringify(this.origin)} | size : ${JSON.stringify(this.size)}`);
-    console.log(`  ${x1}, ${y1} | ${x2}, ${y2}`)
-    console.log(`  ${JSON.stringify(this.style)}`)
-    
-    // console.log(`lol ${lol}`)
-
-    g.setColor(this.style.col_bg).fillRect(x1, y1, x2, y2);
-    g.setColor(this.style.col_border).drawRect(x1, y1, x2, y2);
+    g.setColor(this.style.col_border).fillRect(x1, y1, x2, y2);
+    g.setColor(this.style.col_bg).fillRect(x1+border_thickness/2, y1+border_thickness/2, x2-border_thickness/2, y2-border_thickness/2);
     g.setColor(this.style.col_text);
 
     g.setFontAlign(0, 0).setFont("Vector", 20).drawString(this.label, (x1+x2)/2, (y1+y2)/2);
@@ -194,52 +250,134 @@ class Button {
   set_origin(origin) {
       this.origin = origin;
       return this;
+    }
+  }
+  
+  function is_undefined(variable) {
+    if (typeof variable !== "undefined") {
+      return false;
+    }
+    else {
+      return true;
+    }
+  }
+  
+  // --------- Headers finished. Onto Timer stuff.
+  
+  let tickTimer;
+  
+  function clearTickTimer() {
+    if (tickTimer) {
+      clearTimeout(tickTimer);
+      tickTimer = undefined;
+    }
+  }
+  
+  function queueNextTick() {
+    clearTickTimer();
+    tickTimer = setTimeout(tick, 100);
+  }
+  
+  function tick() {
+    // console.log("tick");
+    draw();
+    queueNextTick();
   }
 
-}
+  console.log(`So far so good..`)
+  
+  // --------- Timer finished. Onto drawing stuff.
+  
+  // Clear the screen once, at startup
+  g.clear();
 
-console.log(`So far so good..`)
-
-// Clear the screen once, at startup
-g.clear();
-
-var layer_buttons = new Layer();
-
-// var ok_layout = [
-//   {id: "btn", origin: {x: 3, y:3}, size: {w:50, h:50}, label: "", style: {col_bg: GREEN, col_text: BLACK, col_border:BLACK}}
-// ]
-
-var ok_layout = [];
+  var main_window = new Window("palette", BLACK);
+  var layer_buttons = new Layer();
+  
+var grid_layout = [];
 
 const top_left_x = 3;
 const top_left_y = 3;
-const width = 40;
-const height = 40;
+const width = 20;
+const height = 20;
 const spacing = 3
 
-for (let i = 0; i < 4; i++) {
-  for (let j = 0; j < 4; j++) {
+const N =10;
+const M =10;
+// Generate sample layout
+for (let i = 0; i < N; i++) {
+  for (let j = 0; j < M; j++) {
     
-    ok_layout.push(
+    grid_layout.push(
       {
-        id: "btn", 
+        type: "btn", 
         origin: {
         x: top_left_x + (width + spacing)*i ,
         y: top_left_y + (height + spacing)*j,
         },
         size: {w:width, h:height}, 
-        label: `${i},${j}`,
-        style: {col_bg: GREEN, col_text: BLACK, col_border:WHITE}
+        // label: `${i},${j}`,
+        style: {col_bg: (i%2===1)?GREEN:RED, col_text: BLACK, col_border:WHITE}
       });
     }
 }
 
+var ok_layout = [
+  {
+    type: "btn",
+    origin: {
+      x: 3, y: 3
+    },
+    size: {w:_screen_mid, h:40},
+    style: {col_bg:RED},
+    label: ""
+  },
+  {
+    type: "btn",
+    origin: {
+      x: 3, y: 100
+    },
+    size: {w:40, h:40},
+    style: {col_bg:RED},
+    label: ""
+  },
+  // {
+  //   type: "btn",
+  //   origin: {
+  //     x: 3,
+  //     y: 3
+  //   },
+  //   size: {w:40, h:40},
+  //   style: {col_bg:RED},
+  //   label: ""
+  // },
+]
+
+// add it to the layer
+// layer_buttons.add_features(grid_layout);
 layer_buttons.add_features(ok_layout);
 
-g.setColor(BLACK);
-g.fillRect(0, 0, g.getWidth(), g.getHeight())
+// Tap away!
+layer_buttons.layout[0].set_style(
+  {
+    col_bg: WHITE,
+    col_text:BLACK,
+    col_border:PURPLE
+  }
+).set_label("Tap away!").set_origin({x:3, y:3})
+.set_size({w:_screen_mid*2-8,h:_screen_mid-3});
+// Palette Tool
+layer_buttons.layout[1].set_style(
+  {
+    col_bg: WHITE,
+    col_text:BLACK,
+    col_border:PURPLE
+  }
+).set_label("Palette Tool").set_origin({x:3, y:_screen_mid+3})
+.set_size({w:_screen_mid*2-8,h:_screen_mid-6});
 
-layer_buttons.render();
+main_window.push(layer_buttons);
+main_window.render();
 
 console.log(`Created all.`)
 
@@ -249,3 +387,10 @@ Bangle.on('touch', function (button, xy) {
   // window.render();
 
 });
+
+function draw() {
+  main_window.render();
+}
+
+// Tick
+tick();
