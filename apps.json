@@ -5086,5 +5086,272 @@
       {"name":"ltherm.app.js","url":"app.js"},
       {"name":"ltherm.img","url":"icon.js","evaluate":true}
     ]
+  },
+  {
+    "id": "slash",
+    "name": "Slash Watch",
+    "shortName":"Slash",
+    "icon": "slash.png",
+    "screenshots": [{"url":"screenshot.png"}],
+    "version":"0.01",
+    "description": "Slash Watch based on Pebble watch face by Nikki.",
+    "tags": "clock",
+    "type": "clock",
+    "supports":["BANGLEJS2"],
+    "readme": "README.md",
+    "allow_emulator": true,
+    "storage": [
+      {"name":"slash.app.js","url":"app.js"},
+      {"name":"slash.img","url":"app-icon.js","evaluate":true}
+    ]
+  },
+  {
+    "id": "promenu",
+    "name": "Pro Menu",
+    "version": "0.01",
+    "description": "Replace Bangle.js 1's built in menu function.",
+    "icon": "icon.png",
+    "type": "boot",
+    "tags": "system",
+    "supports": ["BANGLEJS"],
+    "screenshots": [{"url":"pro-menu-screenshot.png"}],
+    "storage": [
+      {"name":"promenu.boot.js","url":"boot.js"},
+      {"name":"promenu.img","url":"promenuIcon.js","evaluate":true}
+    ]
+  },
+  {
+    "id": "touchtimer",
+    "name": "Touch Timer",
+    "shortName": "Touch Timer",
+    "version": "0.02",
+    "description": "Quickly and easily create a timer with touch-only input. The time can be easily set with a number pad.",
+    "icon": "app.png",
+    "tags": "tools",
+    "supports": ["BANGLEJS2"],
+    "readme": "README.md",
+    "screenshots": [{"url":"0_light_timer_edit.png"},{"url":"1_light_timer_ready.png"},{"url":"2_light_timer_running.png"},{"url":"3_light_timer_finished.png"}],
+    "storage": [
+      { "name": "touchtimer.app.js", "url": "app.js" },
+      { "name":"touchtimer.settings.js", "url":"settings.js"},
+      { "name": "touchtimer.img", "url": "app-icon.js", "evaluate": true }
+    ],
+    "data": [{"name":"touchtimer.data.json"}]
+  },
+  {
+    "id": "teatimer",
+    "name": "Tea Timer",
+    "version": "1.00",
+    "description": "A simple timer. You can easyly set up the time.",
+    "icon": "teatimer.png",
+    "type": "app",
+    "tags": "tool",
+    "supports": ["BANGLEJS2"],
+    "readme": "README.md",
+    "storage": [
+      {"name":"teatimer.app.js","url":"app.js"},
+      {"name":"teatimer.img","url":"app-icon.js","evaluate":true}
+    ],
+    "screenshots": [
+      {"url":"TeatimerStart.jpg"},
+      {"url":"TeatimerHelp.jpg"},
+      {"url":"TeatimerRun.jpg"},
+      {"url":"TeatimerUp.jpg"}
+    ]
+  },
+  {
+    "id": "swp2clk",
+    "name": "Swipe back to the Clock",
+    "shortName": "Swipe to Clock",
+    "version": "0.01",
+    "description": "Let's you swipe from left to right on any app to return back to the clock face. Please configure in the settings app after installing to activate, since its disabled by default.",
+    "icon": "app.png",
+    "type": "boot",
+    "tags": "tools",
+    "supports": ["BANGLEJS2"],
+    "readme": "README.md",
+    "storage": [
+      { "name": "swp2clk.boot.js", "url": "boot.js" },
+      {"name":"swp2clk.settings.js","url":"settings.js"}
+    ],
+    "data": [{"name":"swp2clk.data.json"}]
+  },
+  {
+    "id":"colorwheel",
+    "name":"Color Wheel",
+    "tags":"app,tool",
+    "version":"0.01",
+    "description":"a tappable wheel of good-looking colors",
+    "readme":"README.md",
+    "supports":["BANGLEJS2"],
+    "allow_emulator":true,
+    "icon":"colorwheel.png",
+    "storage": [
+      {"name":"colorwheel.app.js","url":"app.js"},
+      {"name":"colorwheel.img","url":"app-icon.js","evaluate":true}
+    ]
+  },
+  { "id": "minimal_clock",
+    "name": "Minimal Analog Clock",
+    "shortName":"Minimal Clock",
+    "version":"0.03",
+    "description": "a minimal analog clock - just with some hands and no clock face",
+    "icon": "app-icon.png",
+    "type": "clock",
+    "tags": "clock",
+    "supports" : ["BANGLEJS2"],
+    "allow_emulator": true,
+    "screenshots": [{"url":"app-screenshot.png"}],
+    "readme": "README.md",
+    "storage": [
+      {"name":"minimal_clock.app.js","url":"app.js"},
+      {"name":"minimal_clock.img","url":"app-icon.js","evaluate":true}
+    ]
+  },
+  { "id": "simple_clock",
+    "name": "Simple Analog Clock",
+    "shortName":"Simple Clock",
+    "version":"0.02",
+    "description": "a simple, yet stylish, analog clock",
+    "icon": "app-icon.png",
+    "type": "clock",
+    "tags": "clock",
+    "supports" : ["BANGLEJS2"],
+    "allow_emulator": true,
+    "screenshots": [{"url":"app-screenshot.png"}],
+    "readme": "README.md",
+    "storage": [
+      {"name":"simple_clock.app.js","url":"app.js"},
+      {"name":"simple_clock.img","url":"app-icon.js","evaluate":true}
+    ]
+  },
+  { "id": "colorful_clock",
+    "name": "Colorful Analog Clock",
+    "shortName":"Colorful Clock",
+    "version":"0.02",
+    "description": "a colorful analog clock",
+    "icon": "app-icon.png",
+    "type": "clock",
+    "tags": "clock",
+    "supports" : ["BANGLEJS2"],
+    "allow_emulator": true,
+    "screenshots": [{"url":"app-screenshot.png"}],
+    "readme": "README.md",
+    "storage": [
+      {"name":"colorful_clock.app.js","url":"app.js"},
+      {"name":"colorful_clock.img","url":"app-icon.js","evaluate":true}
+    ]
+  },
+  { "id": "themesetter",
+    "name": "Theme Setter",
+    "shortName":"Theme Setter",
+    "version":"0.04",
+    "description": "a comfortable way to configure theme colors",
+    "icon": "app-icon.png",
+    "type": "app",
+    "tags": "tool",
+    "supports" : ["BANGLEJS2"],
+    "allow_emulator": true,
+    "screenshots": [{"url":"app-screenshot.png"}],
+    "readme": "README.md",
+    "storage": [
+      {"name":"themesetter.app.js","url":"app.js"},
+      {"name":"themesetter.img","url":"app-icon.js","evaluate":true}
+    ]
+  },
+  {
+    "id": "widviztime",
+    "name": "Widget Autohide Widget",
+    "shortName": "Viz Time Widget",
+    "version": "0.01",
+    "description": "The widgets will be shown for four seconds after the device is unlocked.",
+    "icon": "eye.png",
+    "type": "widget",
+    "tags": "widget",
+    "readme":"README.md",
+    "supports": ["BANGLEJS","BANGLEJS2"],
+    "storage": [
+      {"name":"widviztime.wid.js","url":"widget.js"}
+    ]
+  },
+  {
+    "id": "supf",
+    "name": "Simple Clock with Date",
+    "shortName": "supf Clock",
+    "version": "0.01",
+    "description": "Simple Clock with seconds and date in custom language. Install 'Languages' to get localized names.",
+    "icon": "icon.png",
+    "screenshots": [{"url":"screenshot_supf.png"}],
+    "type": "clock",
+    "tags": "clock",
+    "supports": ["BANGLEJS2"],
+    "allow_emulator": true,
+    "readme": "README.md",
+    "storage": [
+      {"name":"supf.app.js","url":"app.js"},
+      {"name":"supf.img","url":"icon.js","evaluate":true}
+    ]
+  },
+  { "id": "andark",
+    "name": "Analog Dark",
+    "shortName":"AnDark",
+    "version":"0.04",
+    "description": "analog clock face without disturbing widgets",
+    "icon": "andark_icon.png",
+    "type": "clock",
+    "tags": "clock",
+    "supports" : ["BANGLEJS2"],  
+    "readme": "README.md",
+    "storage": [
+      {"name":"andark.app.js","url":"app.js"},
+      {"name":"andark.img","url":"app_icon.js","evaluate":true}
+    ]
+  },
+  {
+    "id": "diract",
+    "name": "DirAct",
+    "shortName": "DirAct",
+    "version": "0.01",
+    "description": "Proximity interaction detection.",
+    "icon": "diract.png",
+    "type": "app",
+    "tags": "tool,sensors",
+    "supports" : [ "BANGLEJS2" ],
+    "allow_emulator": false,
+    "readme": "README.md",
+    "storage": [
+      { "name": "diract.app.js", "url": "diract.js" },
+      { "name": "diract.img", "url": "diract-icon.js", "evaluate": true }
+    ]
+  },
+  {
+    "id": "touchmenu",
+    "name": "TouchMenu",
+    "version": "0.02",
+    "description": "Redesigned menu that uses the full touchscreen on the Bangle.js 2",
+    "screenshots": [{"url":"touchmenu.gif"}],
+    "icon": "touchmenu.png",
+    "type": "bootloader",
+    "tags": "tool",
+    "supports": ["BANGLEJS2"],
+    "storage": [
+      {"name":"touchmenu.boot.js","url":"touchmenu.js"},
+    ]
+  },
+  { "id": "rwatch",
+    "name": "Ruler Watch Reloaded",
+    "shortName":"Ruler Watch",
+    "type": "clock",
+    "version":"0.01",
+    "description": "A Bangle.js 2 port of the Ruler Watch Reloaded for Pebble. The iconic Time 2 watchface lives on!",
+    "icon": "rwatch.png",
+    "tags": "clock, pebble, rwatch, ruler",
+    "supports" : ["BANGLEJS2"],  
+    "readme": "README.md",
+    "storage": [
+      {"name":"rwatch.app.js","url":"rwatch.app.js"},
+      {"name":"pebbled.settings.js","url":"pebbled.settings.js"},
+      {"name":"pebbled.img","url":"pebbled.icon.js","evaluate":true}
+    ]
   }
 ]
