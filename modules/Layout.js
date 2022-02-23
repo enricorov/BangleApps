@@ -1,4 +1,7 @@
+/* Copyright (c) 2022 Bangle.js contibutors. See the file LICENSE for copying permission. */
 /*
+
+Take a look at README.md for hints on developing with this library.
 
 Usage:
 
@@ -34,7 +37,7 @@ layoutObject has:
        optional `scale` specifies if image should be scaled up or not
   * `"custom"` - a custom block where `render(layoutObj)` is called to render
   * `"h"` - Horizontal layout, `c` is an array of more `layoutObject`
-  * `"v"` - Veritical layout, `c` is an array of more `layoutObject`
+  * `"v"` - Vertical layout, `c` is an array of more `layoutObject`
 * A `id` field. If specified the object is added with this name to the
   returned `layout` object, so can be referenced as `layout.foo`
 * A `font` field, eg `6x8` or `30%` to use a percentage of screen height
@@ -42,8 +45,8 @@ layoutObject has:
   and `fillx`/`filly` to be set. Not compatible with text rotation.
 * A `col` field, eg `#f00` for red
 * A `bgCol` field for background color (will automatically fill on render)
-* A `halign` field to set horizontal alignment. `-1`=left, `1`=right, `0`=center
-* A `valign` field to set vertical alignment. `-1`=top, `1`=bottom, `0`=center
+* A `halign` field to set horizontal alignment WITHIN a `v` container. `-1`=left, `1`=right, `0`=center
+* A `valign` field to set vertical alignment WITHIN a `h` container. `-1`=top, `1`=bottom, `0`=center
 * A `pad` integer field to set pixels padding
 * A `fillx` int to choose if the object should fill available space in x. 0=no, 1=yes, 2=2x more space
 * A `filly` int to choose if the object should fill available space in y. 0=no, 1=yes, 2=2x more space
@@ -161,7 +164,7 @@ function Layout(layout, options) {
 
     // Handler for touch events
     function touchHandler(l,e) {
-      if (l.type=="btn" && l.cb && e.x>=l.x && e.y>=l.y && e.x<=l.x+l.w && e.y<=l.y+l.h) {
+      if (l.cb && e.x>=l.x && e.y>=l.y && e.x<=l.x+l.w && e.y<=l.y+l.h) {
         if (e.type==2 && l.cbl) l.cbl(e); else if (l.cb) l.cb(e);
       }
       if (l.c) l.c.forEach(n => touchHandler(n,e));
@@ -177,13 +180,6 @@ function Layout(layout, options) {
     if (l.id) ll[l.id] = l;
     // fix type up
     if (!l.type) l.type="";
-    // FIXME ':'/fsz not needed in new firmwares - Font:12 is handled internally
-    // fix fonts for pre-2v11 firmware
-    if (l.font && l.font.includes(":")) {
-      var f = l.font.split(":");
-      l.font = f[0];
-      l.fsz = f[1];
-    }
     if (l.c) l.c.forEach(recurser);
   }
   recurser(this._l);
@@ -229,7 +225,7 @@ Layout.prototype.render = function (l) {
 
   function render(l) {"ram"
     g.reset();
-    if (l.col) g.setColor(l.col);
+    if (l.col!==undefined) g.setColor(l.col);
     if (l.bgCol!==undefined) g.setBgColor(l.bgCol).clearRect(l.x,l.y,l.x+l.w-1,l.y+l.h-1);
     cb[l.type](l);
   }
@@ -238,13 +234,13 @@ Layout.prototype.render = function (l) {
     "":function(){},
     "txt":function(l){
       if (l.wrap) {
-        g.setFont(l.font,l.fsz).setFontAlign(0,-1);
+        g.setFont(l.font).setFontAlign(0,-1);
         var lines = g.wrapString(l.label, l.w);
         var y = l.y+((l.h-g.getFontHeight()*lines.length)>>1);
         //  TODO: on 2v11 we can just render in a single drawString call
         lines.forEach((line, i) => g.drawString(line, l.x+(l.w>>1), y+g.getFontHeight()*i));
       } else {
-        g.setFont(l.font,l.fsz).setFontAlign(0,0,l.r).drawString(l.label, l.x+(l.w>>1), l.y+(l.h>>1));
+        g.setFont(l.font).setFontAlign(0,0,l.r).drawString(l.label, l.x+(l.w>>1), l.y+(l.h>>1));
       }
     }, "btn":function(l){
       var x = l.x+(0|l.pad), y = l.y+(0|l.pad),
@@ -261,6 +257,7 @@ Layout.prototype.render = function (l) {
         x,y+4
       ], bg = l.selected?g.theme.bgH:g.theme.bg2;
     g.setColor(bg).fillPoly(poly).setColor(l.selected ? g.theme.fgH : g.theme.fg2).drawPoly(poly);
+    if (l.col!==undefined) g.setColor(l.col);
     if (l.src) g.setBgColor(bg).drawImage("function"==typeof l.src?l.src():l.src, l.x + 10 + (0|l.pad), l.y + 8 + (0|l.pad));
     else g.setFont("6x8",2).setFontAlign(0,0,l.r).drawString(l.label,l.x+l.w/2,l.y+l.h/2);
   }, "img":function(l){
@@ -361,7 +358,7 @@ Layout.prototype.update = function() {
       if (l.wrap) {
         l._h = l._w = 0;
       } else {
-        var m = g.setFont(l.font,l.fsz).stringMetrics(l.label);
+        var m = g.setFont(l.font).stringMetrics(l.label);
         l._w = m.width; l._h = m.height;
       }
     }, "btn": function(l) {

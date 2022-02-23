@@ -21,13 +21,11 @@
 */
 
 var Layout = require("Layout");
+var settings = require('Storage').readJSON("messages.settings.json", true) || {};
 var fontSmall = "6x8";
 var fontMedium = g.getFonts().includes("6x15")?"6x15":"6x8:2";
 var fontBig = g.getFonts().includes("12x20")?"12x20":"6x8:2";
 var fontLarge = g.getFonts().includes("6x15")?"6x15:2":"6x8:4";
-var colBg = g.theme.dark ? "#141":"#4f4";
-var colSBg1 = g.theme.dark ? "#121":"#cFc";
-var colSBg2 = g.theme.dark ? "#242":"#9F9";
 // hack for 2v10 firmware's lack of ':size' font handling
 try {
   g.setFont("6x8:2");
@@ -52,7 +50,7 @@ var MESSAGES = require("Storage").readJSON("messages.json",1)||[];
 if (!Array.isArray(MESSAGES)) MESSAGES=[];
 var onMessagesModified = function(msg) {
   // TODO: if new, show this new one
-  if (msg && msg.new) {
+  if (msg && msg.new && !((require('Storage').readJSON('setting.json', 1) || {}).quiet)) {
     if (WIDGETS["messages"]) WIDGETS["messages"].buzz();
     else Bangle.buzz();
   }
@@ -83,7 +81,8 @@ function getMessageImage(msg) {
   if (s=="calendar") return atob("GBiBAAAAAAAAAAAAAA//8B//+BgAGBgAGBgAGB//+B//+B//+B9m2B//+B//+Btm2B//+B//+Btm+B//+B//+A//8AAAAAAAAAAAAA==");
   if (s=="facebook") return getFBIcon();
   if (s=="hangouts") return atob("FBaBAAH4AH/gD/8B//g//8P//H5n58Y+fGPnxj5+d+fmfj//4//8H//B//gH/4A/8AA+AAHAABgAAAA=");
-  if (s=="instagram") return atob("GBiBAf////////////////wAP/n/n/P/z/f/b/eB7/c87/d+7/d+7/d+7/d+7/c87/eB7/f/7/P/z/n/n/wAP////////////////w==");
+  if (s=="home assistant") return atob("FhaBAAAAAADAAAeAAD8AAf4AD/3AfP8D7fwft/D/P8ec572zbzbNsOEhw+AfD8D8P4fw/z/D/P8P8/w/z/AAAAA=");
+  if (s=="instagram") return atob("GBiBAAAAAAAAAAAAAAAAAAP/wAYAYAwAMAgAkAh+EAjDEAiBEAiBEAiBEAiBEAjDEAh+EAgAEAwAMAYAYAP/wAAAAAAAAAAAAAAAAA==");
   if (s=="gmail") return getNotificationImage();
   if (s=="google home") return atob("GBiCAAAAAAAAAAAAAAAAAAAAAoAAAAAACqAAAAAAKqwAAAAAqroAAAACquqAAAAKq+qgAAAqr/qoAACqv/6qAAKq//+qgA6r///qsAqr///6sAqv///6sAqv///6sAqv///6sA6v///6sA6v///qsA6qqqqqsA6qqqqqsA6qqqqqsAP7///vwAAAAAAAAAAAAAAAAA==");
   if (s=="mail") return getNotificationImage();
@@ -101,6 +100,32 @@ function getMessageImage(msg) {
   if (msg.id=="back") return getBackImage();
   return getNotificationImage();
 }
+function getMessageImageCol(msg,def) {
+  return {
+    // generic colors, using B2-safe colors
+    "calendar": "#f00",
+    "mail": "#ff0",
+    "music": "#f0f",
+    "phone": "#0f0",
+    "sms message": "#0ff",
+    // brands, according to https://www.schemecolor.com/?s (picking one for multicolored logos)
+    // all dithered on B2, but we only use the color for the icons.  (Could maybe pick the closest 3-bit color for B2?)
+    "facebook": "#4267b2",
+    "gmail": "#ea4335",
+    "google home": "#fbbc05",
+    "home assistant": "#fff", // ha-blue is #41bdf5, but that's the background
+    "hangouts": "#1ba261",
+    "instagram": "#dd2a7b",
+    "messenger": "#0078ff",
+    "outlook mail": "#0072c6",
+    "skype": "#00aff0",
+    "slack": "#e51670",
+    "telegram": "#0088cc",
+    "twitter": "#1da1f2",
+    "whatsapp": "#4fce5d",
+    "wordfeud": "#e7d3c7",
+  }[(msg.src||"").toLowerCase()]||(def !== undefined?def:g.theme.fg);
+}
 
 function showMapMessage(msg) {
   var m;
@@ -116,8 +141,8 @@ function showMapMessage(msg) {
     eta = m[2];
   } else target=msg.body;
   layout = new Layout({ type:"v", c: [
-    {type:"txt", font:fontMedium, label:target, bgCol:colBg, fillx:1, pad:2 },
-    {type:"h", bgCol:colBg, fillx:1, c: [
+    {type:"txt", font:fontMedium, label:target, bgCol:g.theme.bgH, col: g.theme.fgH, fillx:1, pad:2 },
+    {type:"h", bgCol:g.theme.bgH, col: g.theme.fgH,  fillx:1, c: [
       {type:"txt", font:"6x8", label:"Towards" },
       {type:"txt", font:fontLarge, label:street }
     ]},
@@ -154,7 +179,7 @@ function showMusicMessage(msg) {
     checkMessages({clockIfNoMsg:1,clockIfAllRead:1,showMsgIfUnread:1});
   }
   layout = new Layout({ type:"v", c: [
-    {type:"h", fillx:1, bgCol:colBg,  c: [
+    {type:"h", fillx:1, bgCol:g.theme.bgH, col: g.theme.fgH,   c: [
       { type:"btn", src:getBackImage, cb:back },
       { type:"v", fillx:1, c: [
         { type:"txt", font:fontMedium, label:msg.artist, pad:2 },
@@ -173,9 +198,41 @@ function showMusicMessage(msg) {
   layout.render();
 }
 
+function showMessageScroller(msg) {
+  var bodyFont = fontBig;
+  g.setFont(bodyFont);
+  var lines = [];
+  if (msg.title) lines = g.wrapString(msg.title, g.getWidth()-10)
+  var titleCnt = lines.length;
+  if (titleCnt) lines.push(""); // add blank line after title
+  lines = lines.concat(g.wrapString(msg.body, g.getWidth()-10),["",/*LANG*/"< Back"]);
+  E.showScroller({
+    h : g.getFontHeight(), // height of each menu item in pixels
+    c : lines.length, // number of menu items
+    // a function to draw a menu item
+    draw : function(idx, r) {
+      // FIXME: in 2v13 onwards, clearRect(r) will work fine. There's a bug in 2v12
+      g.setBgColor(idx<titleCnt ? g.theme.bgH : g.theme.bg).
+        setColor(idx<titleCnt ? g.theme.fgH : g.theme.fg).
+        clearRect(r.x,r.y,r.x+r.w, r.y+r.h);
+      g.setFont(bodyFont).drawString(lines[idx], r.x, r.y);
+    }, select : function(idx) {
+      if (idx>=lines.length-2)
+        showMessage(msg.id);
+    }
+  });
+  // ensure button-press on Bangle.js 2 takes us back
+  if (process.env.HWVERSION>1) Bangle.btnWatches = [
+    setWatch(() => showMessage(msg.id), BTN1, {repeat:1,edge:"falling"})
+  ];
+}
+
 function showMessageSettings(msg) {
   E.showMenu({"":{"title":/*LANG*/"Message"},
     "< Back" : () => showMessage(msg.id),
+    /*LANG*/"View Message" : () => {
+      showMessageScroller(msg);
+    },
     /*LANG*/"Delete" : () => {
       MESSAGES = MESSAGES.filter(m=>m.id!=msg.id);
       saveMessages();
@@ -200,7 +257,7 @@ function showMessageSettings(msg) {
 
 function showMessage(msgid) {
   var msg = MESSAGES.find(m=>m.id==msgid);
-  if (!msg) return checkMessages({clockIfNoMsg:0,clockIfAllRead:0,showMsgIfUnread:0}); // go home if no message found
+  if (!msg) return checkMessages({clockIfNoMsg:1,clockIfAllRead:0,showMsgIfUnread:0}); // go home if no message found
   if (msg.src=="Maps") {
     cancelReloadTimeout(); // don't auto-reload to clock now
     return showMapMessage(msg);
@@ -213,21 +270,41 @@ function showMessage(msgid) {
   var title=msg.title, titleFont = fontLarge, lines;
   if (title) {
     var w = g.getWidth()-48;
-    if (g.setFont(titleFont).stringWidth(title) > w)
-      titleFont = fontMedium;
+    if (g.setFont(titleFont).stringWidth(title) > w) {
+      titleFont = fontBig;
+      if (settings.fontSize!=1 && g.setFont(titleFont).stringWidth(title) > w)
+        titleFont = fontMedium;
+    }
     if (g.setFont(titleFont).stringWidth(title) > w) {
       lines = g.wrapString(title, w);
       title = (lines.length>2) ? lines.slice(0,2).join("\n")+"..." : lines.join("\n");
     }
   }
+  // If body of message is only two lines long w/ large font, use large font.
+  var body=msg.body, bodyFont = fontLarge;
+  if (body) {
+    var w = g.getWidth()-10;
+    if (g.setFont(bodyFont).stringWidth(body) > w * 2) {
+      bodyFont = fontBig;
+      if (settings.fontSize!=1 && g.setFont(bodyFont).stringWidth(body) > w * 3)
+        bodyFont = fontMedium;
+    }
+    if (g.setFont(bodyFont).stringWidth(body) > w) {
+      lines = g.setFont(bodyFont).wrapString(msg.body, w);
+      var maxLines = Math.floor((g.getHeight()-110) / g.getFontHeight());
+      body = (lines.length>maxLines) ? lines.slice(0,maxLines).join("\n")+"..." : lines.join("\n");
+    }
+  }
+  function goBack() {
+    msg.new = false; saveMessages(); // read mail
+    cancelReloadTimeout(); // don't auto-reload to clock now
+    checkMessages({clockIfNoMsg:1,clockIfAllRead:0,showMsgIfUnread:0});
+  }
   var buttons = [
-    {type:"btn", src:getBackImage(), cb:()=>{
-      msg.new = false; saveMessages(); // read mail
-      cancelReloadTimeout(); // don't auto-reload to clock now
-      checkMessages({clockIfNoMsg:1,clockIfAllRead:0,showMsgIfUnread:1});
-    }} // back
+    {type:"btn", src:getBackImage(), cb:goBack} // back
   ];
   if (msg.positive) {
+    buttons.push({fillx:1});
     buttons.push({type:"btn", src:getPosImage(), cb:()=>{
       msg.new = false; saveMessages();
       cancelReloadTimeout(); // don't auto-reload to clock now
@@ -236,6 +313,7 @@ function showMessage(msgid) {
     }});
   }
   if (msg.negative) {
+    buttons.push({fillx:1});
     buttons.push({type:"btn", src:getNegImage(), cb:()=>{
       msg.new = false; saveMessages();
       cancelReloadTimeout(); // don't auto-reload to clock now
@@ -243,24 +321,31 @@ function showMessage(msgid) {
       checkMessages({clockIfNoMsg:1,clockIfAllRead:1,showMsgIfUnread:1});
     }});
   }
-  lines = g.wrapString(msg.body, g.getWidth()-10);
-  var body = (lines.length>4) ? lines.slice(0,4).join("\n")+"..." : lines.join("\n");
+
+
   layout = new Layout({ type:"v", c: [
-    {type:"h", fillx:1, bgCol:colBg,  c: [
-      { type:"btn", src:getMessageImage(msg), pad: 3, cb:()=>{
+    {type:"h", fillx:1, bgCol:g.theme.bgH, col: g.theme.fgH,  c: [
+      { type:"btn", src:getMessageImage(msg), col:getMessageImageCol(msg), pad: 3, cb:()=>{
         cancelReloadTimeout(); // don't auto-reload to clock now
         showMessageSettings(msg);
       }},
       { type:"v", fillx:1, c: [
-        {type:"txt", font:fontSmall, label:msg.src||"Message", bgCol:colBg, fillx:1, pad:2, halign:1 },
-        title?{type:"txt", font:titleFont, label:title, bgCol:colBg, fillx:1, pad:2 }:{},
+        {type:"txt", font:fontSmall, label:msg.src||/*LANG*/"Message", bgCol:g.theme.bgH, col: g.theme.fgH, fillx:1, pad:2, halign:1 },
+        title?{type:"txt", font:titleFont, label:title, bgCol:g.theme.bgH, col: g.theme.fgH, fillx:1, pad:2 }:{},
       ]},
     ]},
-    {type:"txt", font:fontMedium, label:body, fillx:1, filly:1, pad:2 },
+    {type:"txt", font:bodyFont, label:body, fillx:1, filly:1, pad:2, cb:()=>{
+      // allow tapping to show a larger version
+      showMessageScroller(msg);
+    } },
     {type:"h",fillx:1, c: buttons}
   ]});
   g.clearRect(Bangle.appRect);
   layout.render();
+  // ensure button-press on Bangle.js 2 takes us back
+  if (process.env.HWVERSION>1) Bangle.btnWatches = [
+    setWatch(goBack, BTN1, {repeat:1,edge:"falling"})
+  ];
 }
 
 
@@ -297,9 +382,8 @@ function checkMessages(options) {
     c : Math.max(MESSAGES.length+1,3), // workaround for 2v10.219 firmware (min 3 not needed for 2v11)
     draw : function(idx, r) {"ram"
       var msg = MESSAGES[idx-1];
-      if (msg && msg.new) g.setBgColor(colBg);
-      else g.setBgColor((idx&1) ? colSBg1 : colSBg2);
-      g.clearRect(r.x,r.y,r.x+r.w-1,r.y+r.h-1).setColor(g.theme.fg);
+      if (msg && msg.new) g.setBgColor(g.theme.bgH).setColor(g.theme.fgH);
+      else g.setColor(g.theme.fg);
       if (idx==0) msg = {id:"back", title:"< Back"};
       if (!msg) return;
       var x = r.x+2, title = msg.title, body = msg.body;
@@ -309,21 +393,25 @@ function checkMessages(options) {
         body = msg.track;
       }
       if (img) {
-        g.drawImage(img, x+24, r.y+24, {rotate:0}); // force centering
+        var fg = g.getColor();
+        g.setColor(getMessageImageCol(msg,fg)).drawImage(img, x+24, r.y+24, {rotate:0}) // force centering
+         .setColor(fg); // only color the icon
         x += 50;
       }
-      var m = msg.title+"\n"+msg.body;
-      if (msg.src) g.setFontAlign(1,1).setFont("6x8").drawString(msg.src, r.x+r.w-2, r.y+r.h-2);
+      var m = msg.title+"\n"+msg.body, longBody=false;
       if (title) g.setFontAlign(-1,-1).setFont(fontBig).drawString(title, x,r.y+2);
       if (body) {
         g.setFontAlign(-1,-1).setFont("6x8");
-        var l = g.wrapString(body, r.w-14);
+        var l = g.wrapString(body, r.w-(x+14));
         if (l.length>3) {
           l = l.slice(0,3);
           l[l.length-1]+="...";
         }
+        longBody = l.length>2;
         g.drawString(l.join("\n"), x+10,r.y+20);
       }
+      if (!longBody && msg.src) g.setFontAlign(1,1).setFont("6x8").drawString(msg.src, r.x+r.w-2, r.y+r.h-2);
+      g.setColor("#888").fillRect(r.x,r.y+r.h-1,r.x+r.w-1,r.y+r.h-1); // dividing line between items
     },
     select : idx => {
       if (idx==0) load();
@@ -343,7 +431,7 @@ g.clear();
 Bangle.loadWidgets();
 Bangle.drawWidgets();
 setTimeout(() => {
-  var unreadTimeoutSecs = (require('Storage').readJSON("messages.settings.json", true) || {}).unreadTimeout;
+  var unreadTimeoutSecs = settings.unreadTimeout;
   if (unreadTimeoutSecs===undefined) unreadTimeoutSecs=60;
   if (unreadTimeoutSecs)
     unreadTimeout = setTimeout(function() {

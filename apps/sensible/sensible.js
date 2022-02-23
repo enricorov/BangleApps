@@ -1,5 +1,5 @@
 /**
- * Copyright reelyActive 2021
+ * Copyright reelyActive 2021-2022
  * We believe in an open Internet of Things
  */
 
@@ -7,6 +7,8 @@
 // Non-user-configurable constants
 const APP_ID = 'sensible';
 const ESPRUINO_COMPANY_CODE = 0x0590;
+const SETTINGS_FILENAME = 'sensible.data.json';
+const UPDATE_MILLISECONDS = 1000;
 const APP_ADVERTISING_DATA = [ 0x12, 0xff, 0x90, 0x05, 0x7b, 0x6e, 0x61, 0x6d,
                                0x65, 0x3a, 0x73, 0x65, 0x6e, 0x73, 0x69, 0x62,
                                0x6c, 0x65, 0x7d ];
@@ -19,16 +21,12 @@ let isBarMenu = false;
 let isGpsMenu = false;
 let isHrmMenu = false;
 let isMagMenu = false;
-let isBarEnabled = true;
-let isGpsEnabled = true;
-let isHrmEnabled = true;
-let isMagEnabled = true;
 let isNewAccData = false;
 let isNewBarData = false;
 let isNewGpsData = false;
 let isNewHrmData = false;
 let isNewMagData = false;
-
+let settings = require('Storage').readJSON(SETTINGS_FILENAME);
 
 
 // Menus
@@ -51,9 +49,9 @@ let accMenu = {
 let barMenu = {
   "": { "title" : "-  Barometer   -" },
   "State": {
-    value: isBarEnabled,
+    value: settings.isBarEnabled,
     format: v => v ? "On" : "Off",
-    onchange: v => { isBarEnabled = v; Bangle.setBarometerPower(v, APP_ID); }
+    onchange: v => { updateSetting('isBarEnabled', v); }
   },
   "Altitude": { value: null },
   "Press": { value: null },
@@ -63,9 +61,9 @@ let barMenu = {
 let gpsMenu = {
   "": { "title" : "-      GPS     -" },
   "State": {
-    value: isGpsEnabled,
+    value: settings.isGpsEnabled,
     format: v => v ? "On" : "Off",
-    onchange: v => { isGpsEnabled = v; Bangle.setGPSPower(v, APP_ID); }
+    onchange: v => { updateSetting('isGpsEnabled', v); }
   },
   "Lat": { value: null },
   "Lon": { value: null },
@@ -77,9 +75,9 @@ let gpsMenu = {
 let hrmMenu = {
   "": { "title" : "-  Heart Rate  -" },
   "State": {
-    value: isHrmEnabled,
+    value: settings.isHrmEnabled,
     format: v => v ? "On" : "Off",
-    onchange: v => { isHrmEnabled = v; Bangle.setHRMPower(v, APP_ID); }
+    onchange: v => { updateSetting('isHrmEnabled', v); }
   },
   "BPM": { value: null },
   "Confidence": { value: null },
@@ -88,9 +86,9 @@ let hrmMenu = {
 let magMenu = {
   "": { "title" : "- Magnetometer -" },
   "State": {
-    value: isMagEnabled,
+    value: settings.isMagEnabled,
     format: v => v ? "On" : "Off",
-    onchange: v => { isMagEnabled = v; Bangle.setCompassPower(v, APP_ID); }
+    onchange: v => { updateSetting('isMagEnabled', v); }
   },
   "x": { value: null },
   "y": { value: null },
@@ -124,27 +122,16 @@ function transmitUpdatedSensorData() {
     isNewMagData = false;
   }
 
-  NRF.setAdvertising(data, { showName: false, interval: 200 });
+  let interval = UPDATE_MILLISECONDS / data.length;
+  NRF.setAdvertising(data, { showName: false, interval: interval });
 }
 
 
 // Encode the bar service data to fit in a Bluetooth PDU
 function encodeBarServiceData() {
-  let tEncoded = Math.round(bar.temperature * 100);
-  let pEncoded = Math.round(bar.pressure * 100);
-  let eEncoded = Math.round(bar.altitude * 100);
-
-  if(bar.temperature < 0) {
-    tEncoded += 0x10000;
-  }
-  if(bar.altitude < 0) {
-    eEncoded += 0x1000000;
-  }
-
-  let t = [ tEncoded & 0xff, (tEncoded >> 8) & 0xff ];
-  let p = [ pEncoded & 0xff, (pEncoded >> 8) & 0xff, (pEncoded >> 16) & 0xff,
-            (pEncoded >> 24) & 0xff ];
-  let e = [ eEncoded & 0xff, (eEncoded >> 8) & 0xff, (eEncoded >> 16) & 0xff ];
+  let t = toByteArray(Math.round(bar.temperature * 100), 2, true);
+  let p = toByteArray(Math.round(bar.pressure * 1000), 4, false);
+  let e = toByteArray(Math.round(bar.altitude * 100), 3, true);
 
   return [
       0x02, 0x01, 0x06,                               // Flags
@@ -157,57 +144,64 @@ function encodeBarServiceData() {
 
 // Encode the GPS service data using the Location and Speed characteristic
 function encodeGpsServiceData() {
-  let latEncoded = Math.round(gps.lat * 10000000);
-  let lonEncoded = Math.round(gps.lon * 10000000);
-  let hEncoded = Math.round(gps.course * 100);
-  let sEncoded = Math.round(1000 * gps.speed / 36);
-
-  if(gps.lat < 0) {
-    latEncoded += 0x100000000;
-  }
-  if(gps.lon < 0) {
-    lonEncoded += 0x100000000;
-  }
-
-  let s = [ sEncoded & 0xff, (sEncoded >> 8) & 0xff ];
-  let lat = [ latEncoded & 0xff, (latEncoded >> 8) & 0xff,
-              (latEncoded >> 16) & 0xff, (latEncoded >> 24) & 0xff ];
-  let lon = [ lonEncoded & 0xff, (lonEncoded >> 8) & 0xff,
-              (lonEncoded >> 16) & 0xff, (lonEncoded >> 24) & 0xff ];
-  let h = [ hEncoded & 0xff, (hEncoded >> 8) & 0xff ];
+  let s = toByteArray(Math.round(1000 * gps.speed / 36), 2, false);
+  let lat = toByteArray(Math.round(gps.lat * 10000000), 4, true);
+  let lon = toByteArray(Math.round(gps.lon * 10000000), 4, true);
+  let e = toByteArray(Math.round(gps.alt * 100), 3, true);
+  let h = toByteArray(Math.round(gps.course * 100), 2, false);
 
   return [
-      0x02, 0x01, 0x06,                                  // Flags
-      0x11, 0x16, 0x67, 0x2a, 0x95, 0x02, s[0], s[1], lat[0], lat[1], lat[2],
-      lat[3], lon[0], lon[1], lon[2], lon[3], h[0], h[1] // Location and Speed
+      0x02, 0x01, 0x06, // Flags
+      0x14, 0x16, 0x67, 0x2a, 0x9d, 0x02, s[0], s[1], lat[0], lat[1], lat[2],
+      lat[3], lon[0], lon[1], lon[2], lon[3], e[0], e[1], e[2], h[0], h[1]
+                        // Location and Speed
   ];
 }
 
 
 // Encode the mag service data using the magnetic flux density 3D characteristic
 function encodeMagServiceData() {
-  let xEncoded = mag.x; // TODO: units???
-  let yEncoded = mag.y;
-  let zEncoded = mag.z;
-
-  if(xEncoded < 0) {
-    xEncoded += 0x10000;
-  }
-  if(yEncoded < 0) {
-    yEncoded += 0x10000;
-  }
-  if(yEncoded < 0) {
-    yEncoded += 0x10000;
-  }
-
-  let x = [ xEncoded & 0xff, (xEncoded >> 8) & 0xff ];
-  let y = [ yEncoded & 0xff, (yEncoded >> 8) & 0xff ];
-  let z = [ zEncoded & 0xff, (zEncoded >> 8) & 0xff ];
+  let x = toByteArray(mag.x, 2, true);
+  let y = toByteArray(mag.y, 2, true);
+  let z = toByteArray(mag.z, 2, true);
 
   return [
       0x02, 0x01, 0x06,                                          // Flags
       0x09, 0x16, 0xa1, 0x2a, x[0], x[1], y[0], y[1], z[0], z[1] // Mag 3D
   ];
+}
+
+
+// Convert the given value to a little endian byte array
+function toByteArray(value, numberOfBytes, isSigned) {
+  let byteArray = new Array(numberOfBytes);
+
+  if(isSigned && (value < 0)) {
+    value += 1 << (numberOfBytes * 8);
+  }
+
+  for(let index = 0; index < numberOfBytes; index++) {
+    byteArray[index] = (value >> (index * 8)) & 0xff;
+  }
+
+  return byteArray;
+}
+
+
+// Enable the sensors as per the current settings
+function enableSensors() {
+  Bangle.setBarometerPower(settings.isBarEnabled, APP_ID);
+  Bangle.setGPSPower(settings.isGpsEnabled, APP_ID);
+  Bangle.setHRMPower(settings.isHrmEnabled, APP_ID);
+  Bangle.setCompassPower(settings.isMagEnabled, APP_ID);
+}
+
+
+// Update the given setting and write to persistent storage
+function updateSetting(name, value) {
+  settings[name] = value;
+  require('Storage').writeJSON(SETTINGS_FILENAME, settings);
+  enableSensors();
 }
 
 
@@ -281,9 +275,6 @@ Bangle.on('mag', function(newMag) {
 
 // On start: enable sensors and display main menu
 g.clear();
-Bangle.setBarometerPower(isBarEnabled, APP_ID);
-Bangle.setGPSPower(isGpsEnabled, APP_ID);
-Bangle.setHRMPower(isHrmEnabled, APP_ID);
-Bangle.setCompassPower(isMagEnabled, APP_ID);
+enableSensors();
 E.showMenu(mainMenu);
-setInterval(transmitUpdatedSensorData, 1000);
+setInterval(transmitUpdatedSensorData, UPDATE_MILLISECONDS);
