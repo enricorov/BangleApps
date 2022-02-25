@@ -1,0 +1,29 @@
+{
+    "id": "rwatch",
+    "name": "Ruler Watch Reloaded",
+    "shortName": "Ruler Watch",
+    "type": "clock",
+    "version": "0.01",
+    "description": "A Bangle.js 2 port of the Ruler Watch Reloaded for Pebble. The iconic Time 2 watchface lives on!",
+    "icon": "rwatch-icon.png",
+    "tags": "clock, pebble, rwatch, ruler",
+    "supports": [
+        "BANGLEJS2"
+    ],
+    "readme": "README.md",
+    "storage": [
+        {
+            "name": "rwatch.app.js",
+            "url": "rwatch.app.js"
+        },
+        {
+            "name": "pebbled.settings.js",
+            "url": "pebbled.settings.js"
+        },
+        {
+            "name": "pebbled.img",
+            "url": "pebbled.icon.js",
+            "evaluate": true
+        }
+    ]
+}

@@ -116,7 +116,7 @@ function init() {
 
 function draw() {
 
-    g.clear();
+    g.reset();
     g.setColor(bgColor).fillRect(0, 0, WIDTH, HEIGHT);
 
     let i, j;
@@ -198,7 +198,7 @@ function draw() {
 }
 
 
-
+g.clear();
 init();
 setInterval(draw, 15000); // refresh every 15s
 draw();
