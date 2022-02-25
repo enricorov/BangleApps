@@ -64,7 +64,7 @@ let line2_p2;
 // const TEXT_OFFSET_X = -37;
 const TEXT_OFFSET_X = XOFFSET + 30;
 const TEXT_OFFSET_Y = 50;
-const font_offset_fix = 20;
+const font_offset_fix = 16;
 
 let rect_text = {
     x: MARK_0 + TEXT_OFFSET_X,
@@ -146,6 +146,11 @@ function draw() {
     // } else {
       y = yh;
     // }
+
+  
+    // draw middle line
+
+    g.setColor(lineColor).fillRect(0, HEIGHT/2-1, WIDTH, HEIGHT/2+1);
   
     g.setColor(fgColor);  
 
@@ -192,9 +197,6 @@ function draw() {
         }
     }
 
-    // draw middle line
-
-    g.setColor(lineColor).fillRect(0, HEIGHT/2-1, WIDTH, HEIGHT/2+1);
 }
 
 
