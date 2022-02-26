@@ -20,6 +20,7 @@ let settings;
 function loadSettings() {
   settings = require("Storage").readJSON(SETTINGS_FILE,1)|| {'bg': '#0f0', 'color': 'Green', 'avStep': 0.75};
 }
+const smallClock = true;
 
 const HEIGHT = g.getHeight();
 const WIDTH = g.getWidth();
@@ -64,7 +65,8 @@ let line2_p2;
 // const TEXT_OFFSET_X = -37;
 const TEXT_OFFSET_X = XOFFSET + 30;
 const TEXT_OFFSET_Y = 50;
-const font_offset_fix = 16;
+// const font_offset_fix = 16;
+const font_offset_fix = (smallClock ? 8 :16);
 
 let rect_text = {
     x: MARK_0 + TEXT_OFFSET_X,
@@ -152,7 +154,8 @@ function draw() {
   
     // draw middle line
 
-    g.setColor(lineColor).fillRect(0, HEIGHT/2-1, WIDTH, HEIGHT/2+1);
+    g.setColor(lineColor).fillRect(0, hour_line_ypos-1, WIDTH, hour_line_ypos+1);
+    //g.setColor(lineColor).drawRect(0, hour_line_ypos-1, WIDTH, hour_line_ypos+1);
   
     g.setColor(fgColor);  
 
@@ -185,8 +188,8 @@ function draw() {
             g.setColor(hourColor);
             
             // g.setFontLECO1976Regular22();
-            g.setFontLECO1976Regular38();
             // g.setFontLECO1976Regular42();
+            (smallClock === true ? g.setFontLECO1976Regular22() : g.setFontLECO1976Regular38());
             
             rect_text.y = y - font_offset_fix;
             g.drawString(text, rect_text.x, rect_text.y);
