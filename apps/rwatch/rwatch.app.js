@@ -81,10 +81,12 @@ const hourColor = "#FFF";
 const lineColor = "#F00";
 
 const COLOR_HOUR_MARK = "#fff";
-const COLOR_HALF_MARK = "#868686";
+//const COLOR_HALF_MARK = "#868686";
+const COLOR_HALF_MARK = "#ddd";
 // const COLOR_HALF_MARK = "#FFFFFF";
-const COLOR_QUARTER_MARK = "#494d2e";
-const COLOR_5MIN_MARK = "#000";
+// const COLOR_QUARTER_MARK = "#494d2e";
+const COLOR_QUARTER_MARK = "#dddddd";
+const COLOR_5MIN_MARK = "#ddd";
 
 const markWidth = [ MARK_0, MARK_5, MARK_5, MARK_15, MARK_5, MARK_5, MARK_30, MARK_5, MARK_5, MARK_15, MARK_5, MARK_5 ];
 
@@ -172,14 +174,11 @@ function draw() {
             } else {
                 g.setColor(COLOR_5MIN_MARK);
             }
-            
-            g.moveTo(mark1.x, mark1.y).lineTo(mark2.x, mark2.y);
-            mark1.y = mark2.y = y - 1;
-            g.moveTo(mark1.x, mark1.y).lineTo(mark2.x, mark2.y);
-            mark1.y = mark2.y = y + 1;
-            g.moveTo(mark1.x, mark1.y).lineTo(mark2.x, mark2.y);
+
+            // g.fillRect(mark1.x, mark1.y - 1, mark2.x, mark2.y + 1); 
+            g.drawRect(mark1.x, mark1.y - 1, mark2.x, mark2.y + 1); 
             }
-            
+
             if (j == 0) {
             text=`${labels[i]}`
 
